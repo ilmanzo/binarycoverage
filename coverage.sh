@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 BINARY=/usr/bin/gzip
 
 TEMP_DIR=$(mktemp -d)
+echo "Using temp directory: $TEMP_DIR"
 
 # Check if the directory was created successfully
 if [[ -z "$TEMP_DIR" ]]; then
@@ -13,13 +14,11 @@ valgrind --tool=callgrind --trace-children=yes --callgrind-out-file=$TEMP_DIR/%p
 # annotate only the one with greater PID (TODO: possible bug when PID rolls)
 CHILD_FILE=$(ls $TEMP_DIR | sort -n | tail -1)
 echo $CHILD_FILE
-callgrind_annotate --auto=no $TEMP_DIR/$CHILD_FILE | grep $BINARY > $TEMP_DIR/executed.txt
-cat $TEMP_DIR/executed.txt
-gdb -ex 'set pagination off' -ex 'info functions' -ex quit $BINARY > $TEMP_DIR/allfunctions.txt
+# auto annotation with --context=1 can be useful for have precise source code line execution
+callgrind_annotate --auto=yes --context=0 $TEMP_DIR/$CHILD_FILE > $TEMP_DIR/executed.txt
+gdb -ex 'set pagination off' -ex 'info functions' -ex quit $BINARY > $TEMP_DIR/all_funcs.txt
 
-python3 analyze.py $TEMPDIR/executed.txt $TEMP_DIR/allfunctions.txt
+python3 analyze.py $TEMP_DIR/executed.txt $TEMP_DIR/all_funcs.txt
 
 # Clean up: Remove the temporary directory and its contents
-rm -rf "$temp_dir"
-
-
+#rm -rf "$TEMP_DIR
