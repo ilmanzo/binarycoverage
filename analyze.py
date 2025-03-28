@@ -37,6 +37,7 @@ def parse_annotated_execution(file, binary_name):
     header=True # we start with the function list
     pattern=f"/usr/src/debug/{binary_name}"
     executed_functions=set()
+    executed_lines=0
     while line:=file.readline():
         line=line.strip()
         if "Auto-annotated source" in line:
@@ -48,9 +49,12 @@ def parse_annotated_execution(file, binary_name):
                 if func:
                     executed_functions.add(func)
             continue
-        # TODO here we count lines of code
+        # here we finished header, so we count lines of code
+        # break when ?
+        if line and line[0].isdigit():
+            executed_lines+=1
     #print(f"DEBUG EXE: {executed_functions}")
-    return (executed_functions, 0)
+    return (executed_functions, executed_lines)
 
 def parse_gdb_output(file, binary_name):
     relevant=False
