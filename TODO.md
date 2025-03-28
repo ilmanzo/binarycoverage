@@ -1,9 +1,2 @@
-- format percentage output (1 decimal ?)
-- parse callgrind output
-- count number of source files
-- implement proper python argument parsing and help
-  - design command line parameters:
-    --binary -b
-    --cloc <optional>, when not given output only function coverage
-    --coverdir=<folder> # where to find coverage data files
+- count number of source lines files
 - try with other programs than gzip
