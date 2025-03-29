@@ -1,3 +1,2 @@
 - ensure dependencies are installed: gdb, valgrind, c_count
-- count number of source lines files
 - try with other programs than gzip

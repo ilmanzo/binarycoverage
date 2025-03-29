@@ -32,29 +32,17 @@ def callgrind_extract_function_name(line):
 
 
 def parse_annotated_execution(file, binary_name):
-    #parse the callgrind annotate output and returns a tuple with
-    #(set of functions executed, number of lines executed)
-    header=True # we start with the function list
+    # parse the callgrind annotate output and returns a 
+    # set of functions executed
     pattern=f"/usr/src/debug/{binary_name}"
     executed_functions=set()
-    executed_lines=0
     while line:=file.readline():
         line=line.strip()
-        if "Auto-annotated source" in line:
-            header=False
-            continue
-        if header:
-            if pattern in line:
-                func=callgrind_extract_function_name(line)
-                if func:
-                    executed_functions.add(func)
-            continue
-        # here we finished header, so we count lines of code
-        # break when ?
-        if line and line[0].isdigit():
-            executed_lines+=1
-    #print(f"DEBUG EXE: {executed_functions}")
-    return (executed_functions, executed_lines)
+        if pattern in line:
+            func=callgrind_extract_function_name(line)
+            if func:
+                executed_functions.add(func)
+    return executed_functions
 
 def parse_gdb_output(file, binary_name):
     relevant=False
@@ -78,36 +66,28 @@ def parse_gdb_output(file, binary_name):
 def main():
     parser = argparse.ArgumentParser(description="Process a binary file with optional parameters.")
     parser.add_argument("--binary", "-b", required=True, help="name of the binary file [ex. gzip]")
-    parser.add_argument("--cloc", "-c", type=int, help="Optional number for lines of code")
     parser.add_argument("--coverdir", "-d", required=True, help="Path to the coverage data directory")
+    parser.add_argument("--verbose", "-v", required=False, help="Output also the names of functions", action='store_true')
 
     args = parser.parse_args()
     executed_funcs=set()
-    executed_lines=0
-
+ 
     for file in glob.glob(os.path.join(args.coverdir,'*.log')):
         with open(file) as f:
-            ef, el=parse_annotated_execution(f,args.binary)
+            ef=parse_annotated_execution(f,args.binary)
             executed_funcs.update(ef)  # join the sets
-            executed_lines+=el
 
     with open(os.path.join(args.coverdir,"all_funcs.gdb")) as f:
         total_funcs=parse_gdb_output(f,args.binary)
 
-    total_lines = args.cloc
     func_coverage = 100*len(executed_funcs)/len(total_funcs)
-    executed=",".join(sorted(list(executed_funcs)))
-    missing=",".join(sorted(list(total_funcs - executed_funcs)))
-    print("--- binary coverage report ---")
-    print(f"Functions     executed: {executed}")
-    print(f"Functions not executed: {missing}")
-    print()
-    print(f"Number of executed functions: {len(executed_funcs)}/{len(total_funcs)}")
-    print(f"Functions coverage: {func_coverage:.2f}%")
-    if total_lines:
-        line_coverage = 100*executed_lines/total_lines
-        print(f"Number of executed lines: {executed_lines}/{total_lines}")
-        print(f"Line coverage: {line_coverage:.2f}%")
+    print("--- Binary coverage report ---")
+    print(f"Functions coverage: {len(executed_funcs)}/{len(total_funcs)} {func_coverage:.2f}%")   
+    if args.verbose:
+        executed=",".join(sorted(list(executed_funcs)))
+        missing=",".join(sorted(list(total_funcs - executed_funcs)))
+        print(f"\nExecuted functions: {executed}")
+        print(f"\nMissing functions : {missing}")
 
 if __name__ == "__main__":
     main()
