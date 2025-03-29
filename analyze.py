@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # take as input a file with the function list (from gdb) and a file with a callgrind_annotate output
-import sys,re,argparse,os
+import sys,re,argparse,os,glob
 
 def gdb_extract_function_name(line):
     # Find the position of the '(' and extract the substring from the end of the line
@@ -59,11 +59,10 @@ def parse_annotated_execution(file, binary_name):
 def parse_gdb_output(file, binary_name):
     relevant=False
     patterns=[f"/usr/src/debug/{binary_name}", "<artificial>"]
-    regex = re.compile(r'\b(?:static\s+|_Bool\s+)?(?:\w+\s+)+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(')
     all_functions=set()
     while line := file.readline():
         line=line.strip()
-        if any((p in line) for p in patterns):
+        if line.startswith('File '):
             relevant=True
             continue
         if relevant:
@@ -83,10 +82,16 @@ def main():
     parser.add_argument("--coverdir", "-d", required=True, help="Path to the coverage data directory")
 
     args = parser.parse_args()
-    with open(os.path.join(args.coverdir,"executed.log")) as f:
-        executed_funcs, executed_lines=parse_annotated_execution(f,args.binary)
+    executed_funcs=set()
+    executed_lines=0
 
-    with open(os.path.join(args.coverdir,"all_funcs.log")) as f:
+    for file in glob.glob(os.path.join(args.coverdir,'*.log')):
+        with open(file) as f:
+            ef, el=parse_annotated_execution(f,args.binary)
+            executed_funcs.update(ef)  # join the sets
+            executed_lines+=el
+
+    with open(os.path.join(args.coverdir,"all_funcs.gdb")) as f:
         total_funcs=parse_gdb_output(f,args.binary)
 
     total_lines = args.cloc

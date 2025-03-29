@@ -19,21 +19,14 @@ def test_help(capfd):
     assert process.returncode == 0
     assert "Usage:" in stdout 
 
-def test_compress(capfd):
+def test_compress_decompress(capfd):
     create_test_file("sample.txt")
-    try:
-        os.remove("sample.txt.gz")
-    except:
-        pass
     process=run(['/usr/bin/gzip','sample.txt'])
     stdout, stderr = capfd.readouterr()
     assert process.returncode == 0
+    process=run(['/usr/bin/gzip','-d','sample.txt'])
+    stdout, stderr = capfd.readouterr()
+    with open("sample.txt") as file:
+        assert(file.readline().startswith("This is a dummy sample"))
+    os.remove("sample.txt")
 
-#def test_decompress(capfd):
-#    try:
-#        os.remove("sample.txt")
-#    except:
-#        pass
-#    process=run(['/usr/bin/gzip','-d','sample.txt.gz'])
-#    stdout, stderr = capfd.readouterr()
-#    assert process.returncode == 0
