@@ -1,2 +1,1 @@
-- ensure dependencies are installed: gdb, valgrind, c_count
 - try with other programs than gzip
