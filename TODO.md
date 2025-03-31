@@ -1,1 +1,2 @@
 - try with other programs than gzip
+- list all the function with colored output: green the executed and red the missing
