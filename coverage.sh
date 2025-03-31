@@ -29,7 +29,7 @@ done
 gdb -ex 'set pagination off' -ex 'info functions' -ex quit $(which $BINARY) > $TEMP_DIR/all_funcs.gdb
 # experimental: count lines of code
 #CODELINES=$(find /usr/src/debug/$BINARY* -name *.c -type f | xargs c_count | grep 'lines containing code' | cut -f1)
-python3 analyze.py --binary $BINARY -d $TEMP_DIR -v
+python3 calc_coverage.py --binary $BINARY -d $TEMP_DIR -v
 
 # Clean up: Remove the temporary directory and its contents
 #rm -rf "$TEMP_DIR
