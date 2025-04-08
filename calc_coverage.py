@@ -35,11 +35,12 @@ def callgrind_extract_function_name(line):
     return sub_line[:space_index]
 
 
-def parse_annotated_execution(file, binary_name):
+def parse_annotated_execution(lines, binary_name):
     "parse the callgrind annotate output and returns a set of functions executed"
+    "input: multilne string (standard output of callgrind_annotate)"
     pattern = f"/usr/src/debug/{binary_name}"
     executed_functions = set()
-    while line := file.readline():  # walrus operator
+    for line in lines.splitlines():  # walrus operator
         line = line.strip()
         if pattern in line:
             func = callgrind_extract_function_name(line)
@@ -81,20 +82,18 @@ def main():
     for file in glob.glob(os.path.join(args.coverdir, 'callgrind.*')):
         try:
             result = subprocess.run(
-                            ["callgrind_annotate", "--auto=yes", "--context=0", file],
-                            capture_output=True,  # Capture stdout and stderr
-                            text=True,  # Decode stdout and stderr as text
-                            check=True, # Raise exception on non-zero exit code.
-                        )
-            with open(result.stdout) as f:
-                ef = parse_annotated_execution(f, args.binary)
-                executed_funcs.update(ef)  # join the sets
-
+                        ["callgrind_annotate", "--auto=yes", "--context=0", file],
+                        capture_output=True,  # Capture stdout and stderr
+                        text=True,  # Decode stdout and stderr as text
+                        check=True, # Raise exception on non-zero exit code.
+                    )
         except subprocess.CalledProcessError as e:
             print(f"Error processing {f}: {e}")
         except FileNotFoundError:
             print("callgrind_annotate command not found. Please install it.")
             sys.exit(1)
+        ef = parse_annotated_execution(result.stdout, args.binary)
+        executed_funcs.update(ef)  # join the sets
 
     with open(os.path.join(args.coverdir, "all_funcs.gdb")) as f:
         total_funcs = parse_gdb_output(f, args.binary)

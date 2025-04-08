@@ -11,7 +11,7 @@ def test_help(capfd):
     assert process.returncode == 0
     assert "Usage:" in stdout 
 
-# program should display version information
+# # program should display version information
 def test_version(capfd):
     process=run([PROGRAM,'-V'])
     stdout, stderr = capfd.readouterr()
